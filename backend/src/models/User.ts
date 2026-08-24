@@ -15,7 +15,6 @@ const userSchema = new Schema(
     email: {
       type: String,
       required: [true, 'E-mail é obrigatório'],
-      unique: true,
       trim: true,
       lowercase: true,
       maxlength: 254,
