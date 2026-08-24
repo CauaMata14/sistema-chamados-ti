@@ -83,6 +83,7 @@ Acesse `http://localhost:3000`, cadastre uma conta (papel `usuario`) para abrir 
 | `JWT_REFRESH_EXPIRES_IN` | Validade do refresh token (ex: `7d`) |
 | `CORS_ORIGIN` | Origem exata permitida (URL do front-end, nunca `*`) |
 | `AUTH_RATE_LIMIT_WINDOW_MS` / `AUTH_RATE_LIMIT_MAX` | Janela e limite de tentativas nas rotas de autenticação |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | Opcionais — notificação por e-mail em mudança de status. Sem `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS`, o envio fica desativado (log de aviso, sistema continua funcionando normalmente) |
 
 ### `frontend/.env`
 
@@ -161,8 +162,15 @@ Cada rota sensível valida papel (`RBAC`) e posse do recurso na camada de servic
 - Mensagens de erro genéricas para o cliente; detalhes internos só aparecem em log de servidor (nunca na resposta HTTP em produção).
 - Todas as variáveis sensíveis via `.env`, nunca hardcoded.
 
+## Notificações por e-mail
+
+Quando um técnico muda o status de um chamado (diretamente via `PATCH /tickets/:id/status`, ou implicitamente ao assumir um chamado "aberto", que passa a "em_andamento"), o solicitante recebe um e-mail avisando a transição.
+
+- **Best-effort e assíncrono**: o envio roda em segundo plano (`notification.service.ts` → `email.service.ts`) e nunca lança — uma falha de SMTP fica só no log do servidor, não vira erro 500 nem atrasa a resposta da API. A mudança de status já foi persistida antes de a notificação ser disparada.
+- **Opcional por padrão**: sem `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` configurados, o serviço não tenta enviar nada (um aviso único no log) — não é necessário ter um servidor SMTP para rodar o projeto localmente.
+- Para testar o envio real sem gastar uma conta de e-mail de verdade, uma conta gratuita em [ethereal.email](https://ethereal.email) funciona como SMTP de teste (a mensagem "chega" numa inbox falsa, nunca é entregue de verdade).
+
 ## Próximos passos (fora do escopo desta primeira entrega)
 
 - Módulo de sugestão automática de categoria via IA, usando a arquitetura já preparada em `Categoria`.
 - Testes automatizados (unitários nos services, integração nas rotas).
-- Notificações por e-mail em mudanças de status.

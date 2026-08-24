@@ -23,6 +23,16 @@ const envSchema = z.object({
 
   AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900_000),
   AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
+
+  // Notificações por e-mail (mudança de status de chamado). Todo opcional:
+  // sem SMTP_HOST/SMTP_USER/SMTP_PASS o envio fica desativado — o sistema
+  // continua funcionando normalmente, só sem notificar por e-mail.
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  SMTP_SECURE: z.coerce.boolean().default(false),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -35,3 +45,8 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 export const isProduction = env.NODE_ENV === 'production';
+
+// SMTP totalmente configurado é o único caso em que o envio de e-mail é
+// tentado; caso contrário, email.service faz no-op silencioso (avisado
+// uma única vez no log) em vez de falhar a operação de negócio.
+export const emailHabilitado = Boolean(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS);
