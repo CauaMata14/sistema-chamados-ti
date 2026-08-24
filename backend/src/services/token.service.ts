@@ -87,7 +87,7 @@ export async function rotacionarTokens(
     throw AppError.naoAutorizado('Sessão inválida. Faça login novamente.');
   }
 
-  const { User } = await import('../models/User');
+  const { User } = await import('../models/User.js');
   const usuario = await User.findById(payload.sub);
 
   if (!usuario || !usuario.ativo) {
