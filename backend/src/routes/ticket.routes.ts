@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as ticketController from '../controllers/ticket.controller';
 import { authenticate } from '../middlewares/auth';
 import { authorize } from '../middlewares/rbac';
+import { writeRateLimiter } from '../middlewares/rateLimiter';
 import { validate } from '../middlewares/validate';
 import {
   atribuirTecnicoSchema,
@@ -17,7 +18,7 @@ const router = Router();
 
 router.use(authenticate);
 
-router.post('/', validate(criarTicketSchema), ticketController.criar);
+router.post('/', writeRateLimiter, validate(criarTicketSchema), ticketController.criar);
 router.get('/', validate(listarTicketsQuerySchema), ticketController.listar);
 router.get('/:id', validate(idTicketSchema), ticketController.buscarPorId);
 router.patch('/:id', validate(atualizarTicketSchema), ticketController.atualizar);
@@ -38,6 +39,7 @@ router.patch(
 
 router.post(
   '/:id/comments',
+  writeRateLimiter,
   validate(criarComentarioSchema),
   ticketController.adicionarComentario,
 );

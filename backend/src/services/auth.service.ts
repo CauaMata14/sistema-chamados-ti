@@ -6,6 +6,11 @@ import type { RegisterInput, LoginInput } from '../validators/auth.validators';
 
 const SALT_ROUNDS = 12;
 
+// Hash "dummy" só para gastar o mesmo tempo de bcrypt.compare quando o
+// e-mail não existe, evitando que a diferença de tempo de resposta revele
+// se uma conta existe ou não (timing side-channel).
+const HASH_FANTASMA = '$2b$12$l36NFO3zpi7kWeWWhNWQ.uRSDUoNcDWFppJTZsdh9j4AmeBr4Rg6m';
+
 interface SessaoResult {
   accessToken: string;
   refreshToken: string;
@@ -54,13 +59,11 @@ export async function login(dados: LoginInput): Promise<SessaoResult> {
   // Mensagem genérica de propósito: não revela se o e-mail existe ou não.
   const credenciaisInvalidas = () => AppError.naoAutorizado('E-mail ou senha inválidos.');
 
-  if (!usuario || !usuario.ativo) {
-    throw credenciaisInvalidas();
-  }
+  // Sempre compara contra um hash (real ou fantasma) para gastar o mesmo
+  // tempo nos dois caminhos — evita revelar por timing se o e-mail existe.
+  const senhaConfere = await bcrypt.compare(dados.senha, usuario?.senhaHash ?? HASH_FANTASMA);
 
-  const senhaConfere = await bcrypt.compare(dados.senha, usuario.senhaHash);
-
-  if (!senhaConfere) {
+  if (!usuario || !usuario.ativo || !senhaConfere) {
     throw credenciaisInvalidas();
   }
 

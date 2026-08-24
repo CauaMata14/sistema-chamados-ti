@@ -10,6 +10,13 @@ import { env } from './config/env';
 export function createApp(): Application {
   const app = express();
 
+  // Confia só no 1º proxy reverso (Render/Vercel) para que req.ip reflita o
+  // IP real do cliente via X-Forwarded-For. Sem isso, todos os clientes
+  // aparecem com o mesmo IP atrás do proxy, e o rate limiter de auth passa a
+  // contar tentativas de todo mundo junto — bloqueando todos os usuários
+  // depois de poucas tentativas de qualquer um.
+  app.set('trust proxy', 1);
+
   app.use(helmet());
 
   // CORS com origem explícita — nunca "*" — para permitir cookies httpOnly
