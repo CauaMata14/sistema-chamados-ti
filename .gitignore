@@ -1,0 +1,29 @@
+# Dependências
+node_modules/
+
+# Builds
+backend/dist/
+frontend/.next/
+frontend/out/
+frontend/tsconfig.tsbuildinfo
+
+# Variáveis de ambiente (nunca commitar segredos)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operacional / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Arquivos temporários de limpeza
+_to_delete/
+
+# Download local do zip do projeto (não deve ir pro repo)
+_download/

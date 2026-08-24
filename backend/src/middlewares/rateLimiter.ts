@@ -1,0 +1,14 @@
+import rateLimit from 'express-rate-limit';
+import { env } from '../config/env';
+
+/**
+ * Limita tentativas nas rotas de autenticação (login/register/refresh) para
+ * dificultar força bruta e enumeração de credenciais.
+ */
+export const authRateLimiter = rateLimit({
+  windowMs: env.AUTH_RATE_LIMIT_WINDOW_MS,
+  max: env.AUTH_RATE_LIMIT_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { erro: 'Muitas tentativas. Tente novamente mais tarde.' },
+});
