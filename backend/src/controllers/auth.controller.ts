@@ -9,7 +9,11 @@ const REFRESH_COOKIE = 'refreshToken';
 const cookieOptions = {
   httpOnly: true,
   secure: isProduction,
-  sameSite: 'strict' as const,
+  // 'none' é necessário em produção porque front-end (Vercel) e back-end (Render)
+  // ficam em domínios diferentes — cookie cross-site só é enviado com sameSite='none'
+  // (e exige secure=true, que já é o caso em produção). Em dev, 'lax' é suficiente
+  // e mais seguro, já que front e back rodam em localhost.
+  sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
   path: '/api/auth',
 };
 
