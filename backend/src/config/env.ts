@@ -12,9 +12,11 @@ const envSchema = z.object({
 
   MONGODB_URI: z.string().min(1, 'MONGODB_URI é obrigatório'),
 
-  JWT_ACCESS_SECRET: z.string().min(16, 'JWT_ACCESS_SECRET deve ter pelo menos 16 caracteres'),
+  // 32+ caracteres (idealmente gerado com `openssl rand -base64 48`) para
+  // resistir a força bruta offline contra o HMAC do JWT.
+  JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET deve ter pelo menos 32 caracteres'),
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
-  JWT_REFRESH_SECRET: z.string().min(16, 'JWT_REFRESH_SECRET deve ter pelo menos 16 caracteres'),
+  JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET deve ter pelo menos 32 caracteres'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
 
   CORS_ORIGIN: z.string().min(1, 'CORS_ORIGIN é obrigatório'),

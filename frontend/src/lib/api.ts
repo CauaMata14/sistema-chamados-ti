@@ -1,5 +1,10 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
 
+// Enviado em toda requisição. O back-end exige esse header em /auth/refresh
+// e /auth/logout (que autenticam só via cookie) como mitigação de CSRF: um
+// header custom força preflight CORS, que um site de terceiros não passa.
+const HEADERS_CSRF = { 'X-Requested-With': 'sistema-chamados-ti' } as const;
+
 /**
  * O access token vive só em memória (nunca em localStorage), para reduzir
  * a superfície de roubo por XSS. Ele é perdido ao recarregar a página, mas
@@ -32,6 +37,7 @@ async function chamarRefresh(): Promise<string | null> {
     const resposta = await fetch(`${API_URL}/auth/refresh`, {
       method: 'POST',
       credentials: 'include',
+      headers: HEADERS_CSRF,
     });
 
     if (!resposta.ok) {
@@ -64,7 +70,7 @@ interface RequestOptions {
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...HEADERS_CSRF };
 
   if (accessToken) {
     headers.Authorization = `Bearer ${accessToken}`;
