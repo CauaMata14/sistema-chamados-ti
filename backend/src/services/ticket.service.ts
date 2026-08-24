@@ -4,6 +4,7 @@ import { TicketEvent } from '../models/TicketEvent';
 import { Categoria } from '../models/Categoria';
 import { User } from '../models/User';
 import { AppError } from '../utils/AppError';
+import { notificarMudancaStatus } from './notification.service';
 import type {
   CriarTicketInput,
   AtualizarTicketInput,
@@ -21,6 +22,19 @@ interface ListarTicketsFiltros {
   tecnicoResponsavel?: string;
   pagina: number;
   limite: number;
+}
+
+// InferSchemaType tipa campos `ref` como ObjectId; após `.populate(...)`
+// eles viram o documento populado em runtime, mas o tipo estático não
+// muda — este cast local é o mesmo idioma já usado em `garantirAcesso`
+// (`ticket.solicitante._id`) para acessar os campos trazidos pelo populate.
+interface ContatoPopulado {
+  nome: string;
+  email: string;
+}
+
+function contatoDoSolicitante(ticket: TicketDocument): ContatoPopulado {
+  return ticket.solicitante as unknown as ContatoPopulado;
 }
 
 const CAMPOS_POPULAR = [
@@ -180,7 +194,20 @@ export async function atualizarStatus(
     statusNovo: novoStatus,
   });
 
-  return ticket.populate(CAMPOS_POPULAR);
+  const ticketPopulado = await ticket.populate(CAMPOS_POPULAR);
+
+  // Fire-and-forget: notificação é best-effort e não deve segurar a
+  // resposta da API esperando o SMTP responder (ver notification.service).
+  void notificarMudancaStatus({
+    destinatarioEmail: contatoDoSolicitante(ticketPopulado).email,
+    destinatarioNome: contatoDoSolicitante(ticketPopulado).nome,
+    ticketId: String(ticketPopulado._id),
+    ticketTitulo: ticketPopulado.titulo,
+    statusAnterior: statusAtual,
+    statusNovo: novoStatus,
+  });
+
+  return ticketPopulado;
 }
 
 export async function atribuirTecnico(
@@ -195,6 +222,8 @@ export async function atribuirTecnico(
   if (!tecnico || tecnico.papel !== 'tecnico' || !tecnico.ativo) {
     throw new AppError('Técnico inválido.', 422);
   }
+
+  const statusAnterior = ticket.status as StatusChamado;
 
   ticket.tecnicoResponsavel = tecnico._id;
 
@@ -211,7 +240,22 @@ export async function atribuirTecnico(
     tecnicoAtribuido: tecnico._id,
   });
 
-  return ticket.populate(CAMPOS_POPULAR);
+  const ticketPopulado = await ticket.populate(CAMPOS_POPULAR);
+
+  // Atribuir um técnico a um chamado "aberto" também muda o status —
+  // solicitante merece a mesma notificação que receberia via PATCH /status.
+  if (statusAnterior !== ticket.status) {
+    void notificarMudancaStatus({
+      destinatarioEmail: contatoDoSolicitante(ticketPopulado).email,
+      destinatarioNome: contatoDoSolicitante(ticketPopulado).nome,
+      ticketId: String(ticketPopulado._id),
+      ticketTitulo: ticketPopulado.titulo,
+      statusAnterior,
+      statusNovo: ticket.status as StatusChamado,
+    });
+  }
+
+  return ticketPopulado;
 }
 
 export async function adicionarComentario(id: string, usuario: UsuarioContexto, texto: string) {
