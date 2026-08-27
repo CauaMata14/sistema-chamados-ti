@@ -164,7 +164,10 @@ Cada rota sensível valida papel (`RBAC`) e posse do recurso na camada de servic
 
 ## Notificações por e-mail
 
-Quando um técnico muda o status de um chamado (diretamente via `PATCH /tickets/:id/status`, ou implicitamente ao assumir um chamado "aberto", que passa a "em_andamento"), o solicitante recebe um e-mail avisando a transição.
+O solicitante recebe um e-mail em dois casos:
+
+- **Mudança de status** — diretamente via `PATCH /tickets/:id/status`, ou implicitamente ao assumir um chamado "aberto" (que passa a "em_andamento").
+- **Novo comentário de um técnico** — via `POST /tickets/:id/comments`. Comentários do próprio solicitante não geram e-mail (ninguém precisa ser avisado do que escreveu).
 
 - **Best-effort e assíncrono**: o envio roda em segundo plano (`notification.service.ts` → `email.service.ts`) e nunca lança — uma falha de SMTP fica só no log do servidor, não vira erro 500 nem atrasa a resposta da API. A mudança de status já foi persistida antes de a notificação ser disparada.
 - **Opcional por padrão**: sem `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` configurados, o serviço não tenta enviar nada (um aviso único no log) — não é necessário ter um servidor SMTP para rodar o projeto localmente.
