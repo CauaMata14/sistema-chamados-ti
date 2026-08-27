@@ -4,7 +4,7 @@ import { TicketEvent } from '../models/TicketEvent';
 import { Categoria } from '../models/Categoria';
 import { User } from '../models/User';
 import { AppError } from '../utils/AppError';
-import { notificarMudancaStatus } from './notification.service';
+import { notificarMudancaStatus, notificarNovoComentario } from './notification.service';
 import type {
   CriarTicketInput,
   AtualizarTicketInput,
@@ -262,12 +262,32 @@ export async function adicionarComentario(id: string, usuario: UsuarioContexto, 
   const ticket = await buscarTicketOuFalhar(id);
   garantirAcesso(ticket, usuario);
 
-  return TicketEvent.create({
+  const evento = await TicketEvent.create({
     ticket: ticket._id,
     autor: usuario.id,
     tipo: 'comentario',
     texto,
   });
+
+  const ehDono = String(ticket.solicitante._id ?? ticket.solicitante) === usuario.id;
+
+  // Só o solicitante é notificado, e só quando o comentário não é dele
+  // mesmo — na prática, sempre que quem comentou é um técnico (o único
+  // outro papel com acesso ao chamado, ver `garantirAcesso`).
+  if (!ehDono) {
+    const autor = await User.findById(usuario.id).select('nome');
+
+    void notificarNovoComentario({
+      destinatarioEmail: contatoDoSolicitante(ticket).email,
+      destinatarioNome: contatoDoSolicitante(ticket).nome,
+      ticketId: String(ticket._id),
+      ticketTitulo: ticket.titulo,
+      autorNome: autor?.nome ?? 'Suporte de TI',
+      textoComentario: texto,
+    });
+  }
+
+  return evento;
 }
 
 export async function buscarTimeline(id: string, usuario: UsuarioContexto) {
