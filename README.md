@@ -2,6 +2,19 @@
 
 Sistema full-stack de abertura e acompanhamento de chamados de suporte técnico, desenvolvido como projeto de portfólio. Permite que usuários abram chamados e acompanhem seu andamento, enquanto técnicos assumem, atualizam o status e resolvem os chamados, com métricas consolidadas em um dashboard.
 
+## Demo ao vivo
+
+**[sistema-chamados-ti-chi.vercel.app](https://sistema-chamados-ti-chi.vercel.app)**
+
+- **Para testar como usuário**: crie sua própria conta pela tela de cadastro e abra um chamado.
+- **Para testar como técnico** (assumir chamados, mudar status, comentar): use a conta de demonstração abaixo.
+
+  | E-mail | Senha |
+  |---|---|
+  | `tecnico@chamados.local` | `Tecnico@123` |
+
+  ⚠️ É uma conta **compartilhada e pública** — qualquer visitante desta demo consegue ver, pelo painel de técnico, os chamados (e o e-mail/nome) de quem se cadastrou como usuário. **Não use dados pessoais reais** ao testar o cadastro/abertura de chamado; use um e-mail e nome fictícios.
+
 ## Stack
 
 | Camada          | Tecnologias |
